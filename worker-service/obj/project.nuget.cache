@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "dgSpecHash": "pfZCmt2xHiM=",
+  "success": true,
+  "projectFilePath": "/workspaces/dockercompose2026/worker-service/worker-service.csproj",
+  "expectedPackageFiles": [
+    "/home/codespace/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/10.0.0/microsoft.extensions.dependencyinjection.abstractions.10.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.extensions.logging.abstractions/10.0.0/microsoft.extensions.logging.abstractions.10.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/npgsql/10.0.3/npgsql.10.0.3.nupkg.sha512",
+    "/home/codespace/.nuget/packages/pipelines.sockets.unofficial/2.2.16/pipelines.sockets.unofficial.2.2.16.nupkg.sha512",
+    "/home/codespace/.nuget/packages/stackexchange.redis/2.13.17/stackexchange.redis.2.13.17.nupkg.sha512",
+    "/home/codespace/.nuget/packages/system.io.hashing/10.0.2/system.io.hashing.10.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}
