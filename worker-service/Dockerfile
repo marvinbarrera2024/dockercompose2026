@@ -14,4 +14,4 @@ RUN dotnet publish -c Release -o /app
 FROM mcr.microsoft.com/dotnet/runtime:10.0
 WORKDIR /app
 COPY --from=build /app .
-CMD ["dotnet", "Worker.dll"]
+CMD ["dotnet", "worker-service.dll"]

@@ -24,7 +24,7 @@ app.get('/', async (req, res) => {
   try {
     const queryResult = await pool.query("SELECT opcion, COUNT(*) as total FROM votos GROUP BY opcion");
 
-    let conteo = { "C#": 0, "Java": 0 };
+    let conteo = { "C#": 0, "Java": 0,"Python": 0,"JavaScript": 0 };
     queryResult.rows.forEach(row => {
       conteo[row.opcion] = parseInt(row.total);
     });
@@ -55,6 +55,18 @@ app.get('/', async (req, res) => {
               <h3>Java</h3>
               <p>${conteo["Java"]} votos</p>
           </div>
+          <div class="box java-box">
+              <h3>Java</h3>
+              <p>${conteo["Java"]} votos</p>
+          </div>
+          <div class="box java-box">
+              <h3>Python</h3>
+              <p>${conteo["Python"]} votos</p>
+          </div>
+          <div class="box java-box">
+              <h3>JavaScript</h3>
+              <p>${conteo["JavaScript"]} votos</p>
+          </div>
           <p><i>Esta página se actualiza automáticamente cada 3 segundos.</i></p>
           
           <form action="/reiniciar" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas reiniciar todos los votos a cero?');">
@@ -72,7 +84,7 @@ app.get('/', async (req, res) => {
 // Ruta encargada de hacer la limpieza total
 app.post('/reiniciar', async (req, res) => {
   try {
-    Console.log("Iniciando reinicio del sistema solicitado desde el Dashboard...");
+    console.log("Iniciando reinicio del sistema solicitado desde el Dashboard...");
 
     // A. Vaciar la tabla en PostgreSQL
     await pool.query("TRUNCATE TABLE votos;");
@@ -80,7 +92,7 @@ app.post('/reiniciar', async (req, res) => {
     // B. Eliminar la cola en Redis
     await redisClient.del("votos");
 
-    Console.log("¡Ecosistema reiniciado exitosamente!");
+    console.log("¡Ecosistema reiniciado exitosamente!");
     res.redirect('/');
   } catch (err) {
     console.error("Error durante el reinicio:", err);

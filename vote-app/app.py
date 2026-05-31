@@ -25,6 +25,8 @@ HTML_TEMPLATE = """
     <form action="/votar" method="POST">
         <button type="submit" name="voto" value="C#" class="btn-c">C# (.NET)</button>
         <button type="submit" name="voto" value="Java" class="btn-java">Java</button>
+        <button type="submit" name="voto" value="Python" class="btn-java">Python</button>
+         <button type="submit" name="voto" value="JavaScript" class="btn-java">JavaScript</button>
     </form>
     <p>¡Tu voto se enviará a una cola de Redis en tiempo real!</p>
 </body>

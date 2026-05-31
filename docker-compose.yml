@@ -1,27 +1,24 @@
 version: '3.8'
 
 services:
-  # 1. Base de Datos
   db:
-   image: postgres:15-alpine
+    image: postgres:15-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: supersecretpassword
-      POSTGRES_DB: postgres 
+      POSTGRES_DB: postgres
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - back-tier
 
-  # 2. Broker de Mensajería
   redis:
-   image: redis:alpine
-   command: redis-server --requirepass esfe2026
-   networks:
+    image: redis:alpine
+    command: redis-server --requirepass esfe2026
+    networks:
       - back-tier
 
-  # 3. Frontend de Votación (Construido desde código Python)
   vote-app:
     build: ./vote-app
     ports:
@@ -34,7 +31,6 @@ services:
     depends_on:
       - redis
 
-  # 4. Worker de Procesamiento (Construido desde .NET)
   worker:
     build: ./worker-service
     environment:
@@ -46,7 +42,6 @@ services:
       - redis
       - db
 
-  # 5. Frontend de Resultados (Construido desde Node.js)
   result-app:
     build: ./result-app
     ports:
