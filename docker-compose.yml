@@ -22,7 +22,7 @@ services:
   vote-app:
     build: ./vote-app
     ports:
-      - "5000:5000"
+      - "5000"
     environment:
       - REDIS_HOST=redis
     networks:
@@ -45,15 +45,26 @@ services:
   result-app:
     build: ./result-app
     ports:
-      - "3000:3000"
+      - "3000"
     environment:
       - DB_HOST=db
+      - REDIS_HOST=redis
     networks:
       - front-tier
       - back-tier
     depends_on:
       - db
-
+  balanceador:
+    image: nginx:alpine
+    ports:
+      - "80:80" 
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - front-tier
+    depends_on:
+      - vote-app
+      - result-app
 volumes:
   db-data:
 

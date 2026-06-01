@@ -73,3 +73,25 @@ Usa esta guía para administrar el ecosistema completo desde la terminal. Asegú
   ```bash
   docker-compose logs -f <nombre_servicio>
   ```
+
+  ## 📦 Despliegue con un solo contenedor (Sin réplicas)
+
+  Si quieres usar el balanceador Nginx pero **sin activar múltiples réplicas** para ahorrar memoria en tu computadora, debes indicarle a Docker que levante exactamente un (`1`) contenedor de la app de votación.
+
+  ```bash
+  docker-compose up -d --scale <nombre_servicio>=1
+   ```
+
+  ###  Ver contenedores del proyecto en ejecución
+  Muestra el estado actual (Up/Down), los puertos asignados y cuántas réplicas están corriendo exactamente en este ecosistema.
+  ```bash
+  docker-compose ps
+   ```
+   ### Ver imágenes vinculadas al proyecto
+   ```bash
+   docker-compose images
+   ```
+   ### Apagar contenedores y borrar volúmenes
+   ```bash
+   docker-compose down --volumes
+   ```

@@ -10,8 +10,14 @@ const pool = new Pool({
   host: process.env.DB_HOST || 'db',
   user: 'postgres',
   password: 'supersecretpassword',
-  database: 'votaciones',
+  database: 'votaciones', // Ajustar al nombre real de la BD ("postgres" según tu docker-compose, cámbialo si es necesario)
   port: 5432,
+  connectionTimeoutMillis: 5000 // Evita que se quede colgado esperando infinitamente
+});
+
+//  SOLUCIÓN CRÍTICA: Capturar errores globales del Pool para que el contenedor NO muera
+pool.on('error', (err) => {
+  console.error(' Error inesperado en el Pool de PostgreSQL (BD posiblemente caída):', err.message);
 });
 
 // 2. Configuración de Redis con la contraseña segura
@@ -20,69 +26,33 @@ const redisClient = redis.createClient({
 });
 redisClient.connect().catch(console.error);
 
-app.get('/', async (req, res) => {
+app.get('/resultados', async (req, res) => {
   try {
+    // Intentamos hacer la consulta a PostgreSQL
     const queryResult = await pool.query("SELECT opcion, COUNT(*) as total FROM votos GROUP BY opcion");
 
-    let conteo = { "C#": 0, "Java": 0,"Python": 0,"JavaScript": 0 };
+    let conteo = { "C#": 0, "Java": 0, "Python": 0, "JavaScript": 0 };
     queryResult.rows.forEach(row => {
-      conteo[row.opcion] = parseInt(row.total);
+      if (conteo[row.opcion] !== undefined) {
+        conteo[row.opcion] = parseInt(row.total);
+      }
     });
 
-    // Renderizar HTML con el nuevo botón de reinicio
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-          <title>Resultados en Vivo</title>
-          <meta http-equiv="refresh" content="3">
-          <style>
-              body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: #fafafa; }
-              .box { display: inline-block; width: 200px; margin: 20px; padding: 20px; border-radius: 10px; color: white; font-size: 24px; }
-              .c-box { background-color: #007acc; }
-              .java-box { background-color: #e41f23; }
-              .btn-danger { background-color: #dc3545; color: white; font-size: 16px; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 30px; }
-              .btn-danger:hover { background-color: #bd2130; }
-          </style>
-      </head>
-      <body>
-          <h1>Resultados de la Votación en Tiempo Real</h1>
-          <div class="box c-box">
-              <h3>C# (.NET)</h3>
-              <p>${conteo["C#"]} votos</p>
-          </div>
-          <div class="box java-box">
-              <h3>Java</h3>
-              <p>${conteo["Java"]} votos</p>
-          </div>
-          <div class="box java-box">
-              <h3>Java</h3>
-              <p>${conteo["Java"]} votos</p>
-          </div>
-          <div class="box java-box">
-              <h3>Python</h3>
-              <p>${conteo["Python"]} votos</p>
-          </div>
-          <div class="box java-box">
-              <h3>JavaScript</h3>
-              <p>${conteo["JavaScript"]} votos</p>
-          </div>
-          <p><i>Esta página se actualiza automáticamente cada 3 segundos.</i></p>
-          
-          <form action="/reiniciar" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas reiniciar todos los votos a cero?');">
-              <button type="submit" class="btn-danger">Reiniciar Conteo de Votos</button>
-          </form>
-      </body>
-      </html>
-    `);
+    // Renderizar HTML Normal con datos
+    res.send(renderizarDashboard(conteo, false));
+
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Error en la base de datos.");
+    //  Si la base de datos se cae, capturamos el error aquí
+    console.error("⚠️ Error al consultar la BD. Mostrando modo de degradación amigable...");
+    
+    // Mandamos un conteo en ceros pero avisando en la interfaz que la BD está caída
+    let conteoVacio = { "C#": 0, "Java": 0, "Python": 0, "JavaScript": 0 };
+    res.status(200).send(renderizarDashboard(conteoVacio, true));
   }
 });
 
 // Ruta encargada de hacer la limpieza total
-app.post('/reiniciar', async (req, res) => {
+app.post('/resultados/reiniciar', async (req, res) => {
   try {
     console.log("Iniciando reinicio del sistema solicitado desde el Dashboard...");
 
@@ -93,12 +63,72 @@ app.post('/reiniciar', async (req, res) => {
     await redisClient.del("votos");
 
     console.log("¡Ecosistema reiniciado exitosamente!");
-    res.redirect('/');
+    res.redirect('/resultados');
   } catch (err) {
     console.error("Error durante el reinicio:", err);
-    res.status(500).send("Error al intentar reiniciar los contadores.");
+    res.status(500).send("Error al intentar reiniciar los contadores (¿Está la BD caída?).");
   }
 });
+
+//  Función auxiliar para modularizar el HTML y meter alertas dinámicas
+function renderizarDashboard(conteo, baseDeDatosCaida) {
+  // Si la BD está caída, agregamos un banner de advertencia visual llamativo
+  const bannerAlerta = baseDeDatosCaida 
+    ? `<div style="background-color: #ffcccc; color: #cc0000; padding: 15px; border: 2px solid #cc0000; border-radius: 5px; margin: 20px auto; max-width: 600px; font-weight: bold;">
+          Conexión perdida con la Base de Datos. Los resultados no se están actualizando en este momento.
+       </div>`
+    : '';
+
+  // Deshabilitar botón de reinicio si la BD no responde
+  const botonAtributos = baseDeDatosCaida ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Resultados en Vivo</title>
+        <meta http-equiv="refresh" content="3">
+        <style>
+            body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: #fafafa; }
+            .box { display: inline-block; width: 200px; margin: 20px; padding: 20px; border-radius: 10px; color: white; font-size: 24px; }
+            .c-box { background-color: #007acc; }
+            .java-box { background-color: #e41f23; }
+            .python-box { background-color: #19e04b; }
+            .javascript-box { background-color: #c0f016; }
+            .btn-danger { background-color: #dc3545; color: white; font-size: 16px; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 30px; }
+            .btn-danger:hover { background-color: #bd2130; }
+        </style>
+    </head>
+    <body>
+        <h1>Resultados de la Votación de Lenguajes</h1>
+        
+        ${bannerAlerta}
+
+        <div class="box c-box">
+            <h3>C# (.NET)</h3>
+            <p>${conteo["C#"]} votos</p>
+        </div>
+        <div class="box java-box">
+            <h3>Java</h3>
+            <p>${conteo["Java"]} votos</p>
+        </div>
+        <div class="box python-box">
+            <h3>Python</h3>
+            <p>${conteo["Python"]} votos</p>
+        </div>
+        <div class="box javascript-box">
+            <h3>JavaScript</h3>
+            <p>${conteo["JavaScript"]} votos</p>
+        </div>
+        <p><i>Esta página se actualiza automáticamente cada 3 segundos.</i></p>
+        
+        <form action="/resultados/reiniciar" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas reiniciar todos los votos a cero?');">
+            <button type="submit" class="btn-danger" ${botonAtributos}>Reiniciar Conteo de Votos</button>
+        </form>
+    </body>
+    </html>
+  `;
+}
 
 app.listen(port, () => {
   console.log(`Dashboard corriendo en http://localhost:${port}`);
