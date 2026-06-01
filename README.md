@@ -34,3 +34,42 @@ Usa esta guía para administrar el ecosistema completo desde la terminal. Asegú
 * **Iniciar todos los contenedores por primera vez (o aplicando cambios):**
   ```bash
   docker-compose up --build
+  ```
+ * **Iniciar todos los contenedores en segundo plano (Liberar la terminal):**
+   ```bash
+   docker-compose up -d
+   ```
+* **Detener todos los contenedores:**
+  ```bash
+  docker-compose down
+  ```
+
+* **Destruir el entorno y reiniciar desde cero:**
+  ```bash
+  docker-compose down -v
+  ```
+
+* **Gestión de contenedor específico (Reconstruir y aplicar cambios de código fuente):**
+  ```bash
+  docker-compose up -d --build <nombre_servicio>
+  ```
+
+* **Detener un solo contenedor:**
+  ```bash
+  docker-compose stop <nombre_servicio>
+  ```
+
+* **Iniciar contenedor que estaba detenido:**
+  ```bash
+  docker-compose start <nombre_servicio>
+  ```
+
+* **Reinicio de un contenedor rápido sin aplicar cambios:**
+  ```bash
+  docker-compose restart <nombre_servicio>
+  ```
+
+* **Ver logs en tiempo real:**
+  ```bash
+  docker-compose logs -f <nombre_servicio>
+  ```
