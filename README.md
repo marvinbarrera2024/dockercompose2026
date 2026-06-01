@@ -1,21 +1,20 @@
 
-# 🗳️ Sistema de Votación Distribuido y Resiliente (Microservicios)
+# 🗳️ Sistema de Votación Distribuido y Resiliente
 
-Este proyecto consiste en un sistema de votación en tiempo real diseñado bajo una arquitectura de microservicios altamente escalable, desacoplada y tolerante a fallos, utilizando tecnologías modernas como **.NET 10**, **Python (Flask)**, **Node.js (Express)**, **Redis** y **PostgreSQL**.
+Este proyecto implementa un sistema de votación en tiempo real diseñado bajo una arquitectura de **microservicios con balanceo de carga**, altamente escalable y tolerante a fallos, utilizando tecnologías modernas como **.NET 10**, **Python (Flask)**, **Node.js (Express)**, **Redis**, **PostgreSQL** y **Nginx**.
 
 ---
 
 ## 🏗️ Arquitectura del Sistema
 
-El ecosistema está dividido en 5 componentes autónomos que se comunican de forma asíncrona mediante el patrón **Queue-based Load Leveling (Nivelación de carga basada en colas)**:
+El ecosistema está compuesto por 6 servicios autónomos que operan bajo un modelo de alta disponibilidad:
 
-1. **`vote-app` (Python/Flask):** Frontend interactivo donde los usuarios emiten sus votos. Los registra instantáneamente en memoria RAM mediante Redis para ofrecer una latencia mínima.
-2. **`redis` (Broker de Mensajes):** Base de datos NoSQL que actúa como una fila de mensajes (*Queue*) de alta velocidad, absorbiendo los picos de tráfico extremo y protegiendo al almacenamiento persistente.
-3. **`worker` (.NET 10):** Servicio de procesamiento en segundo plano que consume de forma asíncrona y reactiva los votos de Redis para transferirlos ordenadamente a la base de datos relacional. Cuenta con políticas de reintento avanzadas y *Graceful Shutdown* (apagado controlado) para evitar la pérdida de datos.
-4. **`db` (PostgreSQL):** Almacenamiento definitivo, estructurado y persistente de los votos procesados.
-5. **`result-app` (Node.js/Express):** Dashboard administrativo en tiempo real que consulta las métricas de PostgreSQL para desplegar los resultados gráficos de la votación y gestionar las funciones de mantenimiento del sistema.
-
----
+1. **`balanceador` (Nginx):** El punto de entrada unificado. Actúa como **Proxy Inverso**, recibiendo el tráfico externo y distribuyéndolo equitativamente entre las réplicas disponibles de la aplicación de votación.
+2. **`vote-app` (Python/Flask):** Frontend interactivo. Se despliega mediante múltiples réplicas escalables para absorber el tráfico. Registra los votos en `Redis` para asegurar una latencia mínima.
+3. **`redis` (Broker de Mensajes):** Base de datos NoSQL de alta velocidad que actúa como una cola de mensajes (*Queue*), protegiendo al almacenamiento persistente de picos de tráfico.
+4. **`worker` (.NET 10):** Servicio asíncrono en segundo plano que consume los votos desde `Redis` y los transfiere de forma segura y ordenada a la base de datos.
+5. **`db` (PostgreSQL):** Almacenamiento definitivo, estructurado y persistente de los votos procesados.
+6. **`result-app` (Node.js/Express):** Dashboard administrativo que consulta las métricas en tiempo real almacenadas en `PostgreSQL` para desplegar los resultados.
 
 ## 🛠️ Requisitos Previos
 
